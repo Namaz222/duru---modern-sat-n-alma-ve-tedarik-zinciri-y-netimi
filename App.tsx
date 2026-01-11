@@ -450,8 +450,64 @@ const ProductManager: React.FC<{ products: Product[], setProducts: React.Dispatc
   const formRef = useRef<HTMLDivElement>(null);
 
   const handleSaveProduct = async () => {
-  
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    alert("Lütfen ürün adını giriniz.");
+    return;
+  }
 
+  const exists = products.some(
+    p => p.name.toLowerCase() === trimmedName.toLowerCase() && p.id !== editingId
+  );
+  if (exists) {
+    alert(`"${trimmedName}" isimli bir ürün zaten mevcut!`);
+    return;
+  }
+
+  if (editingId) {
+    // UPDATE
+    const { error } = await supabase
+      .from('products')
+      .update({ name: trimmedName, unit })
+      .eq('id', editingId);
+
+    if (error) {
+      alert('Ürün güncellenemedi');
+      return;
+    }
+  } else {
+    // INSERT
+    const { error } = await supabase
+      .from('products')
+      .insert([{ name: trimmedName, unit }]);
+
+    if (error) {
+      alert('Ürün eklenemedi');
+      return;
+    }
+  }
+
+  // Supabase’ten tekrar çek
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (!error && data) {
+    setProducts(
+      data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        unit: p.unit,
+        createdAt: p.created_at
+      }))
+    );
+  }
+
+  setName('');
+  setUnit(UNITS[0]);
+  setEditingId(null);
+};
 
   const handleEdit = (p: Product) => {
     setEditingId(p.id);
