@@ -91,11 +91,6 @@ useEffect(() => {
 }, []);
 
 
-    setProducts(mapped);
-  };
-
-  loadProducts();
-}, []);
 
   
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
