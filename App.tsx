@@ -109,10 +109,10 @@ useEffect(() => {
   });
 
   useEffect(() => {
-    localStorage.setItem('duru_products', JSON.stringify(products));
-    localStorage.setItem('duru_suppliers', JSON.stringify(suppliers));
-    localStorage.setItem('duru_requests', JSON.stringify(requests));
-  }, [products, suppliers, requests]);
+  localStorage.setItem('duru_suppliers', JSON.stringify(suppliers));
+  localStorage.setItem('duru_requests', JSON.stringify(requests));
+}, [suppliers, requests]);
+
 
   // Security check: If MUTFAK tries to access procurement, redirect to dashboard
   useEffect(() => {
