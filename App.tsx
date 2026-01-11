@@ -65,6 +65,30 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'suppliers' | 'requests' | 'procurement'>('dashboard');
   
   const [products, setProducts] = useState<Product[]>([]);
+useEffect(() => {
+  const loadProducts = async () => {
+    const { data, error } = await supabase
+      .from('ürünler')
+      .select('*')
+      .order('oluşturulma', { ascending: false });
+
+    if (error) {
+      console.error('Ürünler yüklenemedi:', error);
+      return;
+    }
+
+    const mapped: Product[] = data.map((p: any) => ({
+      id: p.id,
+      name: p.isim,
+      unit: p.birim,
+      createdAt: p.oluşturulma
+    }));
+
+    setProducts(mapped);
+  };
+
+  loadProducts();
+}, []);
 
   
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
