@@ -504,33 +504,6 @@ const ProductManager: React.FC<{ products: Product[], setProducts: React.Dispatc
   setEditingId(null);
 };
 
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      alert("Lütfen ürün adını giriniz.");
-      return;
-    }
-
-    const exists = products.some(p => p.name.toLowerCase() === trimmedName.toLowerCase() && p.id !== editingId);
-    if (exists) {
-      alert(`"${trimmedName}" isimli bir ürün zaten mevcut!`);
-      return;
-    }
-
-    if (editingId) {
-      setProducts(prev => prev.map(p => p.id === editingId ? { ...p, name: trimmedName, unit } : p));
-      setEditingId(null);
-    } else {
-      const newProduct: Product = {
-        id: crypto.randomUUID(),
-        name: trimmedName,
-        unit,
-        createdAt: new Date().toISOString()
-      };
-      setProducts([newProduct, ...products]);
-    }
-    setName('');
-    setUnit(UNITS[0]);
-  };
 
   const handleEdit = (p: Product) => {
     setEditingId(p.id);
