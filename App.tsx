@@ -68,7 +68,8 @@ const App: React.FC = () => {
 useEffect(() => {
   const loadProducts = async () => {
     const { data, error } = await supabase
-      .from('ürünler')
+    .from('products')
+
       .select('*')
       .order('oluşturulma', { ascending: false });
 
