@@ -64,10 +64,8 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'suppliers' | 'requests' | 'procurement'>('dashboard');
   
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('duru_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+
   
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
     const saved = localStorage.getItem('duru_suppliers');
