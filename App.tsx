@@ -449,7 +449,61 @@ const ProductManager: React.FC<{ products: Product[], setProducts: React.Dispatc
   const [editingId, setEditingId] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    alert("Lütfen ürün adını giriniz.");
+    return;
+  }
+
+  const exists = products.some(
+    p => p.name.toLowerCase() === trimmedName.toLowerCase() && p.id !== editingId
+  );
+  if (exists) {
+    alert(`"${trimmedName}" isimli bir ürün zaten mevcut!`);
+    return;
+  }
+
+  if (editingId) {
+    const { error } = await supabase
+      .from('products')
+      .update({ name: trimmedName, unit })
+      .eq('id', editingId);
+
+    if (error) {
+      alert('Ürün güncellenemedi');
+      return;
+    }
+  } else {
+    const { error } = await supabase
+      .from('products')
+      .insert([{ name: trimmedName, unit }]);
+
+    if (error) {
+      alert('Ürün eklenemedi');
+      return;
+    }
+  }
+
+  const { data } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  setProducts(
+    (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      unit: p.unit,
+      createdAt: p.created_at
+    }))
+  );
+
+  setName('');
+  setUnit(UNITS[0]);
+  setEditingId(null);
+};
+
     const trimmedName = name.trim();
     if (!trimmedName) {
       alert("Lütfen ürün adını giriniz.");
