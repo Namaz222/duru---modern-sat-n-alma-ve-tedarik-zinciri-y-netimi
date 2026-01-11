@@ -68,10 +68,9 @@ const App: React.FC = () => {
 useEffect(() => {
   const loadProducts = async () => {
     const { data, error } = await supabase
-    .from('products')
-
+      .from('products')
       .select('*')
-      .order('oluşturulma', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Ürünler yüklenemedi:', error);
@@ -80,10 +79,17 @@ useEffect(() => {
 
     const mapped: Product[] = data.map((p: any) => ({
       id: p.id,
-      name: p.isim,
-      unit: p.birim,
-      createdAt: p.oluşturulma
+      name: p.name,
+      unit: p.unit,
+      createdAt: p.created_at
     }));
+
+    setProducts(mapped);
+  };
+
+  loadProducts();
+}, []);
+
 
     setProducts(mapped);
   };
