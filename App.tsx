@@ -93,18 +93,43 @@ useEffect(() => {
 
 
   
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
-    const saved = localStorage.getItem('duru_suppliers');
-    return saved ? JSON.parse(saved) : INITIAL_SUPPLIERS;
-  });
   
   const [requests, setRequests] = useState<PurchaseRequest[]>(() => {
     const saved = localStorage.getItem('duru_requests');
     return saved ? JSON.parse(saved) : INITIAL_REQUESTS;
   });
 
-  useEffect(() => {
-  localStorage.setItem('duru_suppliers', JSON.stringify(suppliers));
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
+useEffect(() => {
+  const loadSuppliers = async () => {
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Tedarikçiler yüklenemedi:', error.message);
+      return;
+    }
+
+    setSuppliers(
+      (data || []).map((s: any) => ({
+        id: s.id,
+        companyName: s.company_name,
+        phone: s.phone,
+        contactPerson: s.contact_person,
+        email: s.email,
+        address: s.address,
+        serviceAreas: s.service_areas || [],
+        createdAt: s.created_at
+      }))
+    );
+  };
+
+  loadSuppliers();
+}, []);
+
   localStorage.setItem('duru_requests', JSON.stringify(requests));
 }, [suppliers, requests]);
 
