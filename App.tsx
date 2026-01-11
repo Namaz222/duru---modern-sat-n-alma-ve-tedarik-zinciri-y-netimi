@@ -659,21 +659,96 @@ const SupplierManager: React.FC<{ suppliers: Supplier[], setSuppliers: React.Dis
     setFormData({ ...formData, serviceAreas: areas.includes(area) ? areas.filter(a => a !== area) : [...areas, area] });
   };
 
-  const handleSaveSupplier = () => {
-    const trimmedCompanyName = formData.companyName?.trim();
-    if (!trimmedCompanyName) { alert("Lütfen firma adını giriniz."); return; }
-    const exists = suppliers.some(s => s.companyName.toLowerCase() === trimmedCompanyName.toLowerCase() && s.id !== editingId);
-    if (exists) { alert(`"${trimmedCompanyName}" isimli bir tedarikçi zaten mevcut!`); return; }
+  const handleSaveSupplier = async () => {
+  const trimmedCompanyName = formData.companyName?.trim();
+  if (!trimmedCompanyName) {
+    alert("Lütfen firma adını giriniz.");
+    return;
+  }
 
-    if (editingId) {
-      setSuppliers(prev => prev.map(s => s.id === editingId ? { ...s, ...formData, companyName: trimmedCompanyName } as Supplier : s));
-      setEditingId(null);
-    } else {
-      const newSupplier: Supplier = { ...formData as Supplier, companyName: trimmedCompanyName, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
-      setSuppliers([newSupplier, ...suppliers]);
+  const exists = suppliers.some(
+    s =>
+      s.companyName.toLowerCase() === trimmedCompanyName.toLowerCase() &&
+      s.id !== editingId
+  );
+
+  if (exists) {
+    alert(`"${trimmedCompanyName}" isimli bir tedarikçi zaten mevcut!`);
+    return;
+  }
+
+  if (editingId) {
+    // UPDATE
+    const { error } = await supabase
+      .from('suppliers')
+      .update({
+        company_name: trimmedCompanyName,
+        phone: formData.phone,
+        contact_person: formData.contactPerson,
+        email: formData.email,
+        address: formData.address,
+        service_areas: formData.serviceAreas
+      })
+      .eq('id', editingId);
+
+    if (error) {
+      console.error(error);
+      alert('Tedarikçi güncellenemedi');
+      return;
     }
-    setFormData({ companyName: '', phone: '', contactPerson: '', email: '', address: '', serviceAreas: [] });
-  };
+  } else {
+    // INSERT
+    const { error } = await supabase
+      .from('suppliers')
+      .insert([{
+        company_name: trimmedCompanyName,
+        phone: formData.phone,
+i,
+        contact_person: formData.contactPerson,
+        email: formData.email,
+        address: formData.address,
+        service_areas: formData.serviceAreas
+      }]);
+
+    if (error) {
+      console.error(error);
+      alert('Tedarikçi eklenemedi');
+      return;
+    }
+  }
+
+  // 🔄 Supabase’ten yeniden çek
+  const { data, error } = await supabase
+    .from('suppliers')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (!error && data) {
+    setSuppliers(
+      data.map((s: any) => ({
+        id: s.id,
+        companyName: s.company_name,
+        phone: s.phone,
+        contactPerson: s.contact_person,
+        email: s.email,
+        address: s.address,
+        serviceAreas: s.service_areas || [],
+        createdAt: s.created_at
+      }))
+    );
+  }
+
+  setFormData({
+    companyName: '',
+    phone: '',
+    contactPerson: '',
+    email: '',
+    address: '',
+    serviceAreas: []
+  });
+  setEditingId(null);
+};
+
 
   const handleEdit = (s: Supplier) => { setEditingId(s.id); setFormData(s); formRef.current?.scrollIntoView({ behavior: 'smooth' }); };
   const handleDelete = (id: string) => {
