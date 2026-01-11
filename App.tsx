@@ -703,7 +703,6 @@ const SupplierManager: React.FC<{ suppliers: Supplier[], setSuppliers: React.Dis
       .insert([{
         company_name: trimmedCompanyName,
         phone: formData.phone,
-i,
         contact_person: formData.contactPerson,
         email: formData.email,
         address: formData.address,
