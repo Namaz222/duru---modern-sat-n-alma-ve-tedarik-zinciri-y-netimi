@@ -516,16 +516,41 @@ const ProductManager: React.FC<{ products: Product[], setProducts: React.Dispatc
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const deleteProduct = (id: string) => {
-    if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
-      setProducts(products.filter(p => p.id !== id));
-      if (editingId === id) {
-        setEditingId(null);
-        setName('');
-        setUnit(UNITS[0]);
-      }
-    }
-  };
+  const deleteProduct = async (id: string) => {
+  if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return;
+
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    alert('Ürün silinemedi');
+    return;
+  }
+
+  // Supabase’ten tekrar çek
+  const { data } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  setProducts(
+    (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      unit: p.unit,
+      createdAt: p.created_at
+    }))
+  );
+
+  if (editingId === id) {
+    setEditingId(null);
+    setName('');
+    setUnit(UNITS[0]);
+  }
+};
+
 
   const handleCancel = () => {
     setEditingId(null);
