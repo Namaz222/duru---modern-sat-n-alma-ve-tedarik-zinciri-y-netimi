@@ -130,8 +130,10 @@ useEffect(() => {
   loadSuppliers();
 }, []);
 
+useEffect(() => {
   localStorage.setItem('duru_requests', JSON.stringify(requests));
-}, [suppliers, requests]);
+}, [requests]);
+
 
 
   // Security check: If MUTFAK tries to access procurement, redirect to dashboard
