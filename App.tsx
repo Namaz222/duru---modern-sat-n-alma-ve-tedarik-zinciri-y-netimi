@@ -775,12 +775,6 @@ const SupplierManager: React.FC<{ suppliers: Supplier[], setSuppliers: React.Dis
   );
 };
 
-const RequestManager: React.FC<{ 
-  requests: PurchaseRequest[], 
-  setRequests: React.Dispatch<React.SetStateAction<PurchaseRequest[]>>,
-  products: Product[],
-  suppliers: Supplier[]
-}> = ({ requests, setRequests, products, suppliers }) => {
   const [showReceiveModal, setShowReceiveModal] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<PurchaseRequest | null>(null);
   const [formData, setFormData] = useState<Partial<PurchaseRequest>>({ productId: '', amount: 1, brand: '', specs: '', note: '' });
