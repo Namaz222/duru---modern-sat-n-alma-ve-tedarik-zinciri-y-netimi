@@ -849,18 +849,7 @@ const RequestManager: React.FC<{
   }
 
   // ✅ Supabase’ten verileri tekrar yükle
-  const deleteRequest = async (id: string) => {
-  if (!confirm('Bu talebi silmek istediğinizden emin misiniz?')) return;
-
-  const { error } = await supabase
-    .from('requests')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    alert('Talep silinemedi: ' + error.message);
-    return;
-  }
+  
 
   // ✅ SADECE LOCAL STATE
   setRequests(prev => prev.filter(r => r.id !== id));
