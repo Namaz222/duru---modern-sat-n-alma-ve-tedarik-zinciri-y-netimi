@@ -818,7 +818,87 @@ useEffect(() => {
   loadRequests();
 }, []);
 
-  const handleSaveRequest = () => {
+  const handleSaveRequest = async () => {
+  if (!formData.productId) {
+    alert('Lütfen bir ürün seçin.');
+    return;
+  }
+
+  const product = products.find(p => p.id === formData.productId);
+  if (!product) return;
+
+  if (editingRequest) {
+    // GÜNCELLEME (UPDATE)
+    const { error } = await supabase
+      .from('requests')
+      .update({
+        product_id: formData.productId,
+        product_name: product.name,
+        quantity: formData.amount,
+        brand: formData.brand,
+        feature: formData.specs,
+        note: formData.note,
+        status: editingRequest.status
+      })
+      .eq('id', editingRequest.id);
+
+    if (error) {
+      alert('Talep güncellenemedi: ' + error.message);
+      return;
+    }
+
+    alert('Talep başarıyla güncellendi.');
+  } else {
+    // YENİ TALEP (INSERT)
+    const { error } = await supabase
+      .from('requests')
+      .insert([
+        {
+          product_id: formData.productId,
+          product_name: product.name,
+          quantity: formData.amount,
+          brand: formData.brand,
+          feature: formData.specs,
+          note: formData.note,
+          status: 'Beklemede'
+        }
+      ]);
+
+    if (error) {
+      alert('Talep eklenemedi: ' + error.message);
+      return;
+    }
+
+    alert('Yeni talep başarıyla kaydedildi.');
+  }
+
+  // ✅ Supabase’ten verileri tekrar yükle
+  const { data, error } = await supabase
+    .from('requests')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (!error && data) {
+    setRequests(
+      (data || []).map((r: any) => ({
+        id: r.id,
+        productId: r.product_id,
+        productName: r.product_name,
+        amount: r.quantity,
+        brand: r.brand,
+        specs: r.feature,
+        note: r.note,
+        status: r.status,
+        timestamp: r.created_at
+      }))
+    );
+  }
+
+  // Formu sıfırla
+  setEditingRequest(null);
+  setFormData({ productId: '', amount: 1, brand: '', specs: '', note: '' });
+};
+
     if (!formData.productId) { alert('Lütfen bir ürün seçin.'); return; }
     const product = products.find(p => p.id === formData.productId);
     if (!product) return;
