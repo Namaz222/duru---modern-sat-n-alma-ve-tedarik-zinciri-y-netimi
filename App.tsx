@@ -896,19 +896,7 @@ useEffect(() => {
   setFormData({ productId: '', amount: 1, brand: '', specs: '', note: '' });
 };
 
-    if (!formData.productId) { alert('Lütfen bir ürün seçin.'); return; }
-    const product = products.find(p => p.id === formData.productId);
-    if (!product) return;
-
-    if (editingRequest) {
-      setRequests(prev => prev.map(r => r.id === editingRequest.id ? { ...r, ...formData, productName: product.name } as PurchaseRequest : r));
-      setEditingRequest(null);
-    } else {
-      const newRequest: PurchaseRequest = { ...formData as PurchaseRequest, id: crypto.randomUUID(), productName: product.name, status: RequestStatus.PENDING, timestamp: new Date().toISOString() };
-      setRequests([newRequest, ...requests]);
-    }
-    setFormData({ productId: '', amount: 1, brand: '', specs: '', note: '' });
-  };
+  
 
   const startEdit = (req: PurchaseRequest) => { setEditingRequest(req); setFormData({ productId: req.productId, amount: req.amount, brand: req.brand, specs: req.specs, note: req.note }); };
   const updateStatus = (id: string, newStatus: RequestStatus) => { if (newStatus === RequestStatus.RECEIVED) { setShowReceiveModal(id); } else { setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r)); } };
