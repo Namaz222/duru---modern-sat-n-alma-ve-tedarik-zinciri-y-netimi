@@ -873,26 +873,23 @@ const RequestManager: React.FC<{
   }
 
   // ✅ Supabase’ten verileri tekrar yükle
-  const { data, error } = await supabase
-    .from('requests')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const deleteRequest = async (id: string) => {
+  if (!confirm('Bu talebi silmek istediğinizden emin misiniz?')) return;
 
-  if (!error && data) {
-    setRequests(
-      (data || []).map((r: any) => ({
-        id: r.id,
-        productId: r.product_id,
-        productName: r.product_name,
-        amount: r.quantity,
-        brand: r.brand,
-        specs: r.feature,
-        note: r.note,
-        status: r.status,
-        timestamp: r.created_at
-      }))
-    );
+  const { error } = await supabase
+    .from('requests')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    alert('Talep silinemedi: ' + error.message);
+    return;
   }
+
+  // ✅ SADECE LOCAL STATE
+  setRequests(prev => prev.filter(r => r.id !== id));
+};
+
 
   // Formu sıfırla
   setEditingRequest(null);
