@@ -784,12 +784,25 @@ const RequestManager: React.FC<{
   const [showReceiveModal, setShowReceiveModal] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<PurchaseRequest | null>(null);
   const [formData, setFormData] = useState<Partial<PurchaseRequest>>({ productId: '', amount: 1, brand: '', specs: '', note: '' });
-useEffect(() => {
-  const loadRequests = async () => {
-    const { data, error } = await supabase
-      .from('requests')
-      .select('*')
-      .order('created_at', { ascending: false });
+const RequestManager: React.FC<{ 
+  requests: PurchaseRequest[], 
+  setRequests: React.Dispatch<React.SetStateAction<PurchaseRequest[]>>,
+  products: Product[],
+  suppliers: Supplier[]
+}> = ({ requests, setRequests, products, suppliers }) => {
+
+  const [showReceiveModal, setShowReceiveModal] = useState<string | null>(null);
+  const [editingRequest, setEditingRequest] = useState<PurchaseRequest | null>(null);
+  const [formData, setFormData] = useState<Partial<PurchaseRequest>>({
+    productId: '',
+    amount: 1,
+    brand: '',
+    specs: '',
+    note: ''
+  });
+
+  // ❌ burada artık Supabase SELECT YOK
+
 
     if (error) {
       console.error('Talepler yüklenemedi:', error.message);
