@@ -811,6 +811,35 @@ const RequestManager: React.FC<{
   products: Product[],
   suppliers: Supplier[]
 }> = ({ requests, setRequests, products, suppliers }) => {
+useEffect(() => {
+  const loadRequests = async () => {
+    const { data, error } = await supabase
+      .from('requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Talepler yüklenemedi:', error.message);
+      return;
+    }
+
+    setRequests(
+      (data || []).map((r: any) => ({
+        id: r.id,
+        productId: r.product_id,
+        productName: r.product_name,
+        amount: r.quantity,
+        brand: r.brand,
+        specs: r.feature,
+        note: r.note,
+        status: r.status,
+        timestamp: r.created_at
+      }))
+    );
+  };
+
+  loadRequests();
+}, []);
 
   const [showReceiveModal, setShowReceiveModal] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<PurchaseRequest | null>(null);
