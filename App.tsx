@@ -900,7 +900,22 @@ useEffect(() => {
 
   const startEdit = (req: PurchaseRequest) => { setEditingRequest(req); setFormData({ productId: req.productId, amount: req.amount, brand: req.brand, specs: req.specs, note: req.note }); };
   const updateStatus = (id: string, newStatus: RequestStatus) => { if (newStatus === RequestStatus.RECEIVED) { setShowReceiveModal(id); } else { setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r)); } };
-  const deleteRequest = (id: string) => { if (confirm('Bu talebi silmek istediğinizden emin misiniz?')) { setRequests(prev => prev.filter(r => r.id !== id)); } };
+  const deleteRequest = async (id: string) => {
+  if (!confirm('Bu talebi silmek istediğinizden emin misiniz?')) return;
+
+  const { error } = await supabase
+    .from('requests')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    alert('Talep silinemedi: ' + error.message);
+    return;
+  }
+
+  setRequests(prev => prev.filter(r => r.id !== id));
+};
+
 
   return (
     <div>
