@@ -991,7 +991,65 @@ const ReceivedModal: React.FC<{ requestId: string, suppliers: Supplier[], reques
   const [vat, setVat] = useState<number>(1);
   const totalExclVat = unitPrice * request.amount;
   const totalInclVat = totalExclVat * (1 + vat/100);
-  const handleSave = () => { if (!supplierId || unitPrice <= 0) { alert('Lütfen geçerli bilgileri giriniz.'); return; } const s = suppliers.find(sup => sup.id === supplierId); onConfirm({ supplierId, supplierName: s?.companyName || 'Bilinmeyen', unitPrice, vatPercent: vat, totalExclVat, totalInclVat, date: new Date().toISOString() }); };
+  const handleSave = async () => {
+  if (!supplierId || unitPrice <= 0) {
+    alert('Lütfen geçerli bilgileri giriniz.');
+    return;
+  }
+
+  const supplier = suppliers.find(s => s.id === supplierId);
+  if (!supplier) {
+    alert('Tedarikçi bulunamadı');
+    return;
+  }
+
+  // 1️⃣ requests → status = RECEIVED
+  const { error: updateError } = await supabase
+    .from('requests')
+    .update({ status: 'Teslim Alındı' })
+    .eq('id', request.id);
+
+  if (updateError) {
+    alert('Talep güncellenemedi: ' + updateError.message);
+    return;
+  }
+
+  // 2️⃣ purchase_history → INSERT
+  const { error: insertError } = await supabase
+    .from('purchase_history')
+    .insert([
+      {
+        request_id: request.id,              // bigint
+        product_id: request.productId,       // uuid
+        supplier_id: supplier.id,             // uuid
+
+        product_name: request.productName,
+        supplier_name: supplier.companyName,
+
+        unit_price: unitPrice,
+        quantity: request.amount,
+
+        purchased_at: new Date().toISOString()
+      }
+    ]);
+
+  if (insertError) {
+    alert('Satın alma geçmişi kaydedilemedi: ' + insertError.message);
+    return;
+  }
+
+  // 3️⃣ UI state güncelle
+  onConfirm({
+    supplierId: supplier.id,
+    supplierName: supplier.companyName,
+    unitPrice,
+    vatPercent: vat,
+    totalExclVat,
+    totalInclVat,
+    date: new Date().toISOString()
+  });
+};
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl">
