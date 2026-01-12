@@ -895,7 +895,27 @@ useEffect(() => {
   
 
   const startEdit = (req: PurchaseRequest) => { setEditingRequest(req); setFormData({ productId: req.productId, amount: req.amount, brand: req.brand, specs: req.specs, note: req.note }); };
-  const updateStatus = (id: string, newStatus: RequestStatus) => { if (newStatus === RequestStatus.RECEIVED) { setShowReceiveModal(id); } else { setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r)); } };
+  const updateStatus = async (id: string, newStatus: RequestStatus) => {
+  if (newStatus === RequestStatus.RECEIVED) {
+    setShowReceiveModal(id);
+    return;
+  }
+
+  const { error } = await supabase
+    .from('requests')
+    .update({ status: newStatus })
+    .eq('id', id);
+
+  if (error) {
+    alert('Durum güncellenemedi: ' + error.message);
+    return;
+  }
+
+  setRequests(prev =>
+    prev.map(r => r.id === id ? { ...r, status: newStatus } : r)
+  );
+};
+
   const deleteRequest = async (id: string) => {
   if (!confirm('Bu talebi silmek istediğinizden emin misiniz?')) return;
 
