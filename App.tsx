@@ -819,10 +819,7 @@ useEffect(() => {
 }, []);
 
   const handleSaveRequest = async () => {
-  if (!formData.productId) {
-    alert('Lütfen bir ürün seçin.');
-    return;
-  }
+
 
   const product = products.find(p => p.id === formData.productId);
   if (!product) return;
