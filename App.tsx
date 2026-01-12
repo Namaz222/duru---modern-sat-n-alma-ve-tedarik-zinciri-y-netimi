@@ -94,10 +94,8 @@ useEffect(() => {
 
   
   
-  const [requests, setRequests] = useState<PurchaseRequest[]>(() => {
-    const saved = localStorage.getItem('duru_requests');
-    return saved ? JSON.parse(saved) : INITIAL_REQUESTS;
-  });
+  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
