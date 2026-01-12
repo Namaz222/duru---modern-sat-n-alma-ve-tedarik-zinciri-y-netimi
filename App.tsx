@@ -128,9 +128,7 @@ useEffect(() => {
   loadSuppliers();
 }, []);
 
-useEffect(() => {
-  localStorage.setItem('duru_requests', JSON.stringify(requests));
-}, [requests]);
+
 
 
 
