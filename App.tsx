@@ -968,6 +968,24 @@ const ProcurementManager: React.FC<{
   suppliers: Supplier[], 
   products: Product[] 
 }> = ({ requests, suppliers, products }) => {
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+useEffect(() => {
+  const loadRecommendations = async () => {
+    const { data, error } = await supabase
+      .from('similar_product_recommendations')
+      .select('*');
+
+    if (error) {
+      console.error('❌ Recommendation load error:', error);
+    } else {
+      console.log('✅ Recommendations:', data);
+      setRecommendations(data || []);
+    }
+  };
+
+  loadRecommendations();
+}, []);
+
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
 
   const pendingRequests = useMemo(() => requests.filter(r => r.status === RequestStatus.PENDING), [requests]);
