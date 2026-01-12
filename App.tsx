@@ -881,7 +881,7 @@ const RequestManager: React.FC<{
   
 
   // ✅ SADECE LOCAL STATE
-  setRequests(prev => prev.filter(r => r.id !== id));
+
 };
 
 
