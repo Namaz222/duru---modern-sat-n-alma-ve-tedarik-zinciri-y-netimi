@@ -796,28 +796,6 @@ const RequestManager: React.FC<{
   // ❌ burada artık Supabase SELECT YOK
 
 
-    if (error) {
-      console.error('Talepler yüklenemedi:', error.message);
-      return;
-    }
-
-    setRequests(
-      (data || []).map((r: any) => ({
-        id: r.id,
-        productId: r.product_id,
-        productName: r.product_name,
-        amount: r.quantity,
-        brand: r.brand,
-        specs: r.feature,
-        note: r.note,
-        status: r.status,
-        timestamp: r.created_at
-      }))
-    );
-  };
-
-  loadRequests();
-}, []);
 
   const handleSaveRequest = async () => {
 
