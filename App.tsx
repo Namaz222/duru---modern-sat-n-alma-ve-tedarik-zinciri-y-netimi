@@ -1097,7 +1097,17 @@ const ProcurementManager: React.FC<{
   suppliers: Supplier[], 
   products: Product[] 
 }> = ({ requests, suppliers, products }) => {
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+const [recommendations, setRecommendations] = useState<{
+  product_id: string;
+  product_key: string;
+  product_name: string;
+  supplier_id: string;
+  supplier_name: string;
+  unit_price: number;
+  quantity: number;
+  purchased_at: string;
+}[]>([]);
+
 useEffect(() => {
   const loadRecommendations = async () => {
     const { data, error } = await supabase
