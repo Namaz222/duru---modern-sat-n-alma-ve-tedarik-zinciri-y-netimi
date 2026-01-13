@@ -1102,15 +1102,28 @@ useEffect(() => {
   const pendingRequests = useMemo(() => requests.filter(r => r.status === RequestStatus.PENDING), [requests]);
 
   const findCheapestOffer = (productId: string) => {
-    const fifteenDaysAgo = new Date();
-    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-    const relevantReceived = requests.filter(r => r.status === RequestStatus.RECEIVED && r.productId === productId && r.receivedDetails && new Date(r.receivedDetails.date) >= fifteenDaysAgo);
-    if (relevantReceived.length === 0) return null;
-    relevantReceived.sort((a, b) => (a.receivedDetails?.unitPrice || 0) - (b.receivedDetails?.unitPrice || 0));
-    const best = relevantReceived[0];
-    const supplier = suppliers.find(s => s.id === best.receivedDetails?.supplierId);
-    return { price: best.receivedDetails?.unitPrice || 0, supplierId: supplier?.id || '', supplierName: best.receivedDetails?.supplierName || '-', supplierPhone: supplier?.phone || '-', supplierEmail: supplier?.email || '', date: best.receivedDetails?.date || '' };
+  const matches = recommendations.filter(
+    r => r.product_id === productId
+  );
+
+  if (matches.length === 0) return null;
+
+  // her tedarikçi için zaten EN GÜNCEL kayıt geliyor
+  // şimdi tedarikçiler arasında en ucuzu seçiyoruz
+  matches.sort((a, b) => a.unit_price - b.unit_price);
+
+  const best = matches[0];
+
+  return {
+    price: best.unit_price,
+    supplierId: best.supplier_id,
+    supplierName: best.supplier_name,
+    supplierPhone: '-',
+    supplierEmail: '-',
+    date: best.purchased_at
   };
+};
+
 
   // Grouping requests by suggested supplier
   const groupedBySupplier = useMemo(() => {
