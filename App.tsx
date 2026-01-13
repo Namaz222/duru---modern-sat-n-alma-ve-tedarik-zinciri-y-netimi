@@ -1159,7 +1159,8 @@ useEffect(() => {
     const unassigned: PurchaseRequest[] = [];
 
     pendingRequests.forEach(req => {
-      const cheapest = findCheapestOffer(req.productId);
+      const cheapest = findCheapestOffer(req.productName);
+
       if (cheapest && cheapest.supplierId) {
         if (!groups[cheapest.supplierId]) {
           groups[cheapest.supplierId] = { supplier: cheapest, requests: [] };
