@@ -910,10 +910,6 @@ const reloadRequests = async () => {
 };
 
 
-  // Formu sıfırla
-  setEditingRequest(null);
-  setFormData({ productId: '', amount: 1, brand: '', specs: '', note: '' });
-};
 
   
 
