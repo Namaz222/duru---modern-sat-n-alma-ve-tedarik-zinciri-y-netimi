@@ -1103,7 +1103,7 @@ useEffect(() => {
     const { data, error } = await supabase
       .from('similar_product_recommendations')
       .select('*');
-
+  console.log('VIEW DATA:', data);
     if (error) {
       console.error('❌ Recommendation load error:', error);
     } else {
