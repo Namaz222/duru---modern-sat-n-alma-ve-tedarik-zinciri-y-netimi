@@ -1170,6 +1170,12 @@ useEffect(() => {
     const unassigned: PurchaseRequest[] = [];
 
     pendingRequests.forEach(req => {
+      console.log('REQ PRODUCT NAME:', req.productName);
+console.log(
+  'RECOMMENDATION PRODUCT NAMES:',
+  recommendations.map(r => r.product_name)
+);
+
       const cheapest = findCheapestOffer(req.productName);
 
       if (cheapest && cheapest.supplierId) {
