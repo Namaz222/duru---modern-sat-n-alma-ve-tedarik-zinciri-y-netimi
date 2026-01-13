@@ -1002,9 +1002,27 @@ const ReceivedModal: React.FC<{ requestId: string, suppliers: Supplier[], reques
   const totalInclVat = totalExclVat * (1 + vat/100);
   const handleSave = async () => {
   if (!supplierId || unitPrice <= 0) {
-    alert('Lütfen geçerli bilgileri giriniz.');
-    return;
-  }
+  const findCheapestOffer = (productName: string) => {
+  const key = productName.trim().toLowerCase();
+
+  const matches = recommendations.filter(
+    r => r.product_key === key
+  );
+
+  if (matches.length === 0) return null;
+
+  matches.sort((a, b) => a.unit_price - b.unit_price);
+
+  const best = matches[0];
+
+  return {
+    price: best.unit_price,
+    supplierId: best.supplier_id,
+    supplierName: best.supplier_name,
+    date: best.purchased_at
+  };
+};
+
 
   const supplier = suppliers.find(s => s.id === supplierId);
   if (!supplier) {
