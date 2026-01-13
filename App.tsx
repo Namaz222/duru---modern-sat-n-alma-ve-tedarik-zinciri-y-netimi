@@ -852,13 +852,14 @@ const reloadRequests = async () => {
 
 
   const handleSaveRequest = async () => {
-
-
   const product = products.find(p => p.id === formData.productId);
-  if (!product) return;
+  if (!product) {
+    alert('Lütfen ürün seçiniz');
+    return;
+  }
 
   if (editingRequest) {
-    // GÜNCELLEME (UPDATE)
+    // UPDATE
     const { error } = await supabase
       .from('requests')
       .update({
@@ -876,38 +877,40 @@ const reloadRequests = async () => {
       alert('Talep güncellenemedi: ' + error.message);
       return;
     }
-
-    alert('Talep başarıyla güncellendi.');
   } else {
-    // YENİ TALEP (INSERT)
+    // INSERT
     const { error } = await supabase
       .from('requests')
-      .insert([
-        {
-          product_id: formData.productId,
-          product_name: product.name,
-          quantity: formData.amount,
-          brand: formData.brand,
-          feature: formData.specs,
-          note: formData.note,
-          status: 'Beklemede'
-        }
-      ]);
+      .insert([{
+        product_id: formData.productId,
+        product_name: product.name,
+        quantity: formData.amount,
+        brand: formData.brand,
+        feature: formData.specs,
+        note: formData.note,
+        status: 'Beklemede'
+      }]);
 
     if (error) {
       alert('Talep eklenemedi: ' + error.message);
       return;
     }
-
-    alert('Yeni talep başarıyla kaydedildi.');
   }
 
-  // ✅ Supabase’ten verileri tekrar yükle
-  
+  // 🔴 EN KRİTİK SATIR
+  await reloadRequests();
 
-  // ✅ SADECE LOCAL STATE
-
+  // 🔴 FORM RESET (ŞART)
+  setEditingRequest(null);
+  setFormData({
+    productId: '',
+    amount: 1,
+    brand: '',
+    specs: '',
+    note: ''
+  });
 };
+
 
 
 
