@@ -1003,15 +1003,20 @@ const ReceivedModal: React.FC<{ requestId: string, suppliers: Supplier[], reques
   const handleSave = async () => {
   if (!supplierId || unitPrice <= 0) {
   const findCheapestOffer = (productName: string) => {
-  const key = productName.trim().toLowerCase();
-
   const matches = recommendations.filter(
-    r => r.product_key === key
+    r => r.product_name === productName
   );
 
   if (matches.length === 0) return null;
 
-  matches.sort((a, b) => a.unit_price - b.unit_price);
+  // 🔑 EN KRİTİK KURAL:
+  // Aynı ürün + aynı tedarikçi için
+  // EN GÜNCEL TARİHLİ kayıt tercih edilir
+  matches.sort(
+    (a, b) =>
+      new Date(b.purchased_at).getTime() -
+      new Date(a.purchased_at).getTime()
+  );
 
   const best = matches[0];
 
@@ -1019,9 +1024,14 @@ const ReceivedModal: React.FC<{ requestId: string, suppliers: Supplier[], reques
     price: best.unit_price,
     supplierId: best.supplier_id,
     supplierName: best.supplier_name,
+    supplierPhone:
+      suppliers.find(s => s.id === best.supplier_id)?.phone || '-',
+    supplierEmail:
+      suppliers.find(s => s.id === best.supplier_id)?.email || '-',
     date: best.purchased_at
   };
 };
+
 
 
   const supplier = suppliers.find(s => s.id === supplierId);
