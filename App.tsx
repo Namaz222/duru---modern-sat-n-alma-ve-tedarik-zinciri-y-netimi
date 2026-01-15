@@ -1120,24 +1120,22 @@ const [recommendations, setRecommendations] = useState<{
 }[]>([]);
 
 useEffect(() => {
-// const loadRecommendations = async () => {
-// const { data, error } = await supabase
-// .from('similar_product_recommendations')
-// .select('*');
-// console.log('VIEW DATA:', data);
-// if (error) {
-// console.error('❌ Recommendation load error:', error);
-// } else {
-// console.log('✅ Recommendations:', data);
-// setRecommendations(data || []);
-// }
-// };
+  const loadRecommendations = async () => {
+    const { data, error } = await supabase
+      .from('similar_product_recommendations')
+      .select('*');
 
-// loadRecommendations();
-// 🚨 Yukarıdaki fonksiyon artık kullanılmıyor.
-// 🚀 Onun yerine geçici olarak boş bir liste atıyoruz:
-setRecommendations([]); // geçici boş liste 
+    if (error) {
+      console.error('❌ Recommendation load error:', error);
+    } else {
+      console.log('✅ Recommendations:', data);
+      setRecommendations(data || []);
+    }
+  };
+
+  loadRecommendations();
 }, []);
+
 
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
 
