@@ -1102,86 +1102,79 @@ const ReceivedModal: React.FC<{ requestId: string, suppliers: Supplier[], reques
     </div>
   );
 };
-
 const ProcurementManager: React.FC<{ 
   requests: PurchaseRequest[], 
   suppliers: Supplier[], 
   products: Product[] 
 }> = ({ requests, suppliers, products }) => {
-const [recommendations, setRecommendations] = useState<{
-  product_id: string;
-  product_key: string;
-  product_name: string;
-  supplier_id: string;
-  supplier_name: string;
-  unit_price: number;
-  quantity: number;
-  purchased_at: string;
-}[]>([]);
+  const [recommendations, setRecommendations] = useState<{
+    product_id: string;
+    product_name: string;
+    supplier_id: string;
+    supplier_name: string;
+    unit_price: number;
+    quantity: number;
+    purchased_at: string;
+  }[]>([]);
 
-useEffect(() => {
-  const loadRecommendations = async () => {
-    const { data, error } = await supabase
-      .from('similar_product_recommendations')
-      .select('*');
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      const { data, error } = await supabase
+        .from('similar_product_recommendations')
+        .select('*');
 
-    if (error) {
-      console.error('❌ Recommendation load error:', error);
-    } else {
-      console.log('✅ Recommendations:', data);
-      setRecommendations(data || []);
-    }
-  };
+      if (error) {
+        console.error('❌ Recommendation load error:', error);
+      } else {
+        console.log('✅ Recommendations:', data);
+        setRecommendations(data || []);
+      }
+    };
 
-  loadRecommendations();
-}, []);
-
+    loadRecommendations();
+  }, []);
 
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
 
-  const pendingRequests = useMemo(() => requests.filter(r => r.status === RequestStatus.PENDING), [requests]);
-
-  const findCheapestOffer = (productId: string, productName?: string) => {
-  // Eğer hem ID hem isim varsa, isimle eşleştirme yapıyoruz
-  const key = productName?.trim().toLowerCase();
-
-  const matches = recommendations.filter(r => 
-    r.product_name?.trim().toLowerCase() === key
+  const pendingRequests = useMemo(
+    () => requests.filter(r => r.status === RequestStatus.PENDING),
+    [requests]
   );
 
-  if (matches.length === 0) return null;
+  // ✅ Ürün adına göre en ucuz tedarikçiyi bulan fonksiyon
+  const findCheapestOffer = (productId: string, productName?: string) => {
+    const key = productName?.trim().toLowerCase();
 
-  // en ucuz olanı seç
-  matches.sort((a, b) => a.unit_price - b.unit_price);
+    const matches = recommendations.filter(r =>
+      r.product_name?.trim().toLowerCase() === key
+    );
 
-  const best = matches[0];
+    if (matches.length === 0) return null;
 
-  return {
-    price: best.unit_price,
-    supplierId: best.supplier_id,
-    supplierName: best.supplier_name,
-    supplierPhone: suppliers.find(s => s.id === best.supplier_id)?.phone || '-',
-    supplierEmail: suppliers.find(s => s.id === best.supplier_id)?.email || '-',
-    date: best.purchased_at
+    // En ucuz olanı seç
+    matches.sort((a, b) => a.unit_price - b.unit_price);
+
+    const best = matches[0];
+
+    return {
+      price: best.unit_price,
+      supplierId: best.supplier_id,
+      supplierName: best.supplier_name,
+      supplierPhone:
+        suppliers.find(s => s.id === best.supplier_id)?.phone || '-',
+      supplierEmail:
+        suppliers.find(s => s.id === best.supplier_id)?.email || '-',
+      date: best.purchased_at
+    };
   };
-};
 
-
-
-  // Grouping requests by suggested supplier
+  // ✅ Talepleri uygun tedarikçilere gruplama
   const groupedBySupplier = useMemo(() => {
-    const groups: Record<string, { supplier: any, requests: PurchaseRequest[] }> = {};
+    const groups: Record<string, { supplier: any; requests: PurchaseRequest[] }> = {};
     const unassigned: PurchaseRequest[] = [];
 
     pendingRequests.forEach(req => {
-      console.log('REQ PRODUCT NAME:', req.productName);
-console.log(
-  'RECOMMENDATION PRODUCT NAMES:',
-  recommendations.map(r => r.product_name)
-);
-
-    const cheapest = findCheapestOffer(req.productId, req.productName);
-
+      const cheapest = findCheapestOffer(req.productId, req.productName);
 
       if (cheapest && cheapest.supplierId) {
         if (!groups[cheapest.supplierId]) {
@@ -1194,7 +1187,7 @@ console.log(
     });
 
     return { groups, unassigned };
-  }, [pendingRequests, requests]);
+  }, [pendingRequests, recommendations, suppliers]);
 
   const toggleExpand = (id: string) => {
     const next = new Set(expandedSuppliers);
@@ -1204,90 +1197,169 @@ console.log(
   };
 
   const handleWhatsApp = (group: any) => {
-    const message = `DURU Sipariş Listesi:\n\n` + group.requests.map((r: any) => `- ${r.productName} (${r.amount} adet) ${r.brand ? '['+r.brand+']' : ''}`).join('\n');
+    const message =
+      `📦 DURU Sipariş Listesi\n\n` +
+      group.requests
+        .map(
+          (r: any) =>
+            `• ${r.productName} (${r.amount} adet) ${r.brand ? '[' + r.brand + ']' : ''}`
+        )
+        .join('\n');
+
     const phone = group.supplier.supplierPhone.replace(/\D/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const handleEmail = (group: any) => {
-    const body = `Sayın Yetkili,\n\nAşağıdaki ürünler için sipariş oluşturmak istiyoruz:\n\n` + group.requests.map((r: any) => `- ${r.productName}: ${r.amount} adet ${r.brand ? '(Marka: '+r.brand+')' : ''}`).join('\n') + `\n\nİyi çalışmalar.`;
-    window.open(`mailto:${group.supplier.supplierEmail}?subject=DURU Sipariş Talebi&body=${encodeURIComponent(body)}`, '_blank');
+    const body =
+      `Sayın Yetkili,\n\nAşağıdaki ürünler için sipariş oluşturmak istiyoruz:\n\n` +
+      group.requests
+        .map(
+          (r: any) =>
+            `- ${r.productName}: ${r.amount} adet ${r.brand ? '(Marka: ' + r.brand + ')' : ''}`
+        )
+        .join('\n') +
+      `\n\nİyi çalışmalar dileriz.\nDURU Satınalma Ekibi`;
+
+    window.open(
+      `mailto:${group.supplier.supplierEmail}?subject=DURU Sipariş Talebi&body=${encodeURIComponent(body)}`,
+      '_blank'
+    );
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-12">
-        <div><h2 className="text-3xl font-black text-slate-900 tracking-tight">Satınalma Analizi</h2><p className="text-slate-500 text-sm font-bold mt-1 uppercase tracking-widest font-mono">En Ucuz Tedarikçi Eşleştirmeli Dinamik Liste</p></div>
-        <div className="bg-emerald-50 px-6 py-4 rounded-[2rem] border border-emerald-100 flex items-center space-x-4 shadow-sm"><TrendingDown className="text-emerald-600" size={32} /><span className="text-emerald-800 font-black text-sm uppercase tracking-widest leading-none">Maliyet Verimliliği<br/><span className="text-[10px] font-bold text-emerald-500">Maksimum Tasarruf</span></span></div>
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+            Satınalma Analizi
+          </h2>
+          <p className="text-slate-500 text-sm font-bold mt-1 uppercase tracking-widest font-mono">
+            En Ucuz Tedarikçi Eşleştirmeli Dinamik Liste
+          </p>
+        </div>
+        <div className="bg-emerald-50 px-6 py-4 rounded-[2rem] border border-emerald-100 flex items-center space-x-4 shadow-sm">
+          <TrendingDown className="text-emerald-600" size={32} />
+          <span className="text-emerald-800 font-black text-sm uppercase tracking-widest leading-none">
+            Maliyet Verimliliği
+            <br />
+            <span className="text-[10px] font-bold text-emerald-500">
+              Maksimum Tasarruf
+            </span>
+          </span>
+        </div>
       </div>
 
+      {/* ✅ Tedarikçi Grupları */}
       <div className="space-y-6">
         {Object.entries(groupedBySupplier.groups).map(([id, group]: [string, any]) => (
-          <div key={id} className="bg-white border-2 border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all">
-            {/* Supplier Header - Büyütülmüş ve Belirginleştirilmiş */}
-            <div 
+          <div
+            key={id}
+            className="bg-white border-2 border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all"
+          >
+            <div
               onClick={() => toggleExpand(id)}
               className="p-8 md:p-10 flex flex-col md:flex-row items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors gap-6"
             >
               <div className="flex items-center space-x-6">
-                <div className="bg-emerald-600 p-5 rounded-[2rem] text-white shadow-lg shadow-emerald-200"><Users size={32} strokeWidth={2.5} /></div>
+                <div className="bg-emerald-600 p-5 rounded-[2rem] text-white shadow-lg shadow-emerald-200">
+                  <Users size={32} strokeWidth={2.5} />
+                </div>
                 <div>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">{group.supplier.supplierName}</h3>
+                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                    {group.supplier.supplierName}
+                  </h3>
                   <div className="flex items-center space-x-3 mt-1">
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-full border border-emerald-200">
                       {group.requests.length} BEKLEYEN ÜRÜN
                     </span>
                     <span className="text-slate-300 text-xs font-bold">|</span>
-                    <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Tedarikçi Grubu</span>
+                    <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+                      Tedarikçi Grubu
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-8 w-full md:w-auto">
                 <div className="flex-1 md:flex-none flex flex-col items-end border-r border-slate-100 pr-8">
-                  <div className="flex items-center text-lg font-black text-slate-700 space-x-2"><Phone size={18} className="text-emerald-500"/> <span>{group.supplier.supplierPhone}</span></div>
-                  <div className="flex items-center text-sm font-bold text-slate-400 space-x-2"><Mail size={16} className="text-indigo-400"/> <span>{group.supplier.supplierEmail}</span></div>
+                  <div className="flex items-center text-lg font-black text-slate-700 space-x-2">
+                    <Phone size={18} className="text-emerald-500" />{' '}
+                    <span>{group.supplier.supplierPhone}</span>
+                  </div>
+                  <div className="flex items-center text-sm font-bold text-slate-400 space-x-2">
+                    <Mail size={16} className="text-indigo-400" />{' '}
+                    <span>{group.supplier.supplierEmail}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={(e) => { e.stopPropagation(); handleWhatsApp(group); }} className="w-14 h-14 bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-[1.5rem] transition-all flex items-center justify-center shadow-md active:scale-95"><MessageCircle size={28}/></button>
-                  <button onClick={(e) => { e.stopPropagation(); handleEmail(group); }} className="w-14 h-14 bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-[1.5rem] transition-all flex items-center justify-center shadow-md active:scale-95"><Mail size={28}/></button>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleWhatsApp(group);
+                    }}
+                    className="w-14 h-14 bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-[1.5rem] transition-all flex items-center justify-center shadow-md active:scale-95"
+                  >
+                    <MessageCircle size={28} />
+                  </button>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleEmail(group);
+                    }}
+                    className="w-14 h-14 bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-[1.5rem] transition-all flex items-center justify-center shadow-md active:scale-95"
+                  >
+                    <Mail size={28} />
+                  </button>
                   <div className="ml-4 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                    {expandedSuppliers.has(id) ? <ChevronUp size={24} className="text-slate-400" /> : <ChevronDown size={24} className="text-slate-400" />}
+                    {expandedSuppliers.has(id) ? (
+                      <ChevronUp size={24} className="text-slate-400" />
+                    ) : (
+                      <ChevronDown size={24} className="text-slate-400" />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Expandable Request List - Karakteristik Tipografi */}
             {expandedSuppliers.has(id) && (
               <div className="px-8 pb-10 pt-2 space-y-4 bg-slate-50/30 border-t border-slate-100">
                 <div className="ml-2 mb-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Sipariş Edilecek Ürün Detayları</h4>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                    Sipariş Edilecek Ürün Detayları
+                  </h4>
                 </div>
                 {group.requests.map((req: any) => (
-                  <div key={req.id} className="bg-white p-8 rounded-[2rem] border border-slate-200 flex items-center justify-between shadow-sm hover:border-emerald-300 transition-all group/item">
+                  <div
+                    key={req.id}
+                    className="bg-white p-8 rounded-[2rem] border border-slate-200 flex items-center justify-between shadow-sm hover:border-emerald-300 transition-all group/item"
+                  >
                     <div className="flex items-center space-x-8">
                       <div className="w-20 h-20 bg-slate-50 border-2 border-slate-100 rounded-3xl flex flex-col items-center justify-center group-hover/item:border-emerald-200 transition-colors">
-                        <span className="text-2xl font-black text-slate-900 leading-none">{req.amount}</span>
-                        <span className="text-[10px] font-black text-slate-400 uppercase mt-1">MİKTAR</span>
+                        <span className="text-2xl font-black text-slate-900 leading-none">
+                          {req.amount}
+                        </span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase mt-1">
+                          MİKTAR
+                        </span>
                       </div>
                       <div>
-                        <h4 className="text-2xl font-black text-slate-900 tracking-tight mb-1 group-hover/item:text-emerald-700 transition-colors">{req.productName}</h4>
-                        <div className="flex items-center space-x-3">
-                          <Package size={14} className="text-slate-300" />
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{req.brand || 'STANDART MARKA'}</p>
-                          {req.specs && (
-                             <>
-                               <span className="text-slate-200">•</span>
-                               <p className="text-xs font-bold text-slate-500 uppercase">{req.specs}</p>
-                             </>
-                          )}
-                        </div>
+                        <h4 className="text-2xl font-black text-slate-900 tracking-tight mb-1 group-hover/item:text-emerald-700 transition-colors">
+                          {req.productName}
+                        </h4>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                          {req.brand || 'STANDART MARKA'}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right bg-emerald-50/50 px-8 py-4 rounded-[1.5rem] border border-emerald-50">
-                      <p className="text-3xl font-black text-emerald-700 tracking-tighter leading-none">{group.supplier.price.toFixed(2)} <span className="text-lg text-emerald-400">TL</span></p>
-                      <p className="text-[10px] text-emerald-400 uppercase font-black tracking-widest mt-2">BİRİM FİYAT ANALİZİ</p>
+                      <p className="text-3xl font-black text-emerald-700 tracking-tighter leading-none">
+                        {group.supplier.price.toFixed(2)}{' '}
+                        <span className="text-lg text-emerald-400">TL</span>
+                      </p>
+                      <p className="text-[10px] text-emerald-400 uppercase font-black tracking-widest mt-2">
+                        BİRİM FİYAT ANALİZİ
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -1296,34 +1368,53 @@ console.log(
           </div>
         ))}
 
+        {/* ✅ Fiyat kaydı olmayan ürünler */}
         {groupedBySupplier.unassigned.length > 0 && (
           <div className="mt-12">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6 ml-4">Fiyat Kaydı Bulunmayan Ürünler</h3>
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-6 ml-4">
+              Fiyat Kaydı Bulunmayan Ürünler
+            </h3>
             <div className="space-y-4">
               {groupedBySupplier.unassigned.map(req => (
-                <div key={req.id} className="bg-white p-8 rounded-[2rem] border-2 border-dashed border-slate-200 flex items-center justify-between opacity-60 hover:opacity-100 transition-opacity">
-                   <div className="flex items-center space-x-6">
-                      <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 font-black text-xl">{req.amount}</div>
-                      <div>
-                        <p className="text-xl font-black text-slate-800 tracking-tight">{req.productName}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Tedarikçi atanamadı - Fiyat bilgisi yetersiz</p>
-                      </div>
+                <div
+                  key={req.id}
+                  className="bg-white p-8 rounded-[2rem] border-2 border-dashed border-slate-200 flex items-center justify-between opacity-60 hover:opacity-100 transition-opacity"
+                >
+                  <div className="flex items-center space-x-6">
+                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 font-black text-xl">
+                      {req.amount}
                     </div>
-                    <div className="flex items-center text-slate-200"><Search size={32} strokeWidth={2.5}/></div>
+                    <div>
+                      <p className="text-xl font-black text-slate-800 tracking-tight">
+                        {req.productName}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">
+                        Tedarikçi atanamadı - Fiyat bilgisi yetersiz
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-slate-200">
+                    <Search size={32} strokeWidth={2.5} />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
+        {/* ✅ Eğer hiç bekleyen sipariş yoksa */}
         {pendingRequests.length === 0 && (
           <div className="py-24 text-center">
             <div className="bg-white p-20 rounded-[4rem] border border-dashed border-slate-200 max-w-2xl mx-auto shadow-sm">
               <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
                 <CheckCircle2 className="text-emerald-500" size={48} strokeWidth={1.5} />
               </div>
-              <h3 className="text-2xl font-black text-slate-300 uppercase tracking-[0.3em]">Bekleyen Sipariş Bulunmuyor</h3>
-              <p className="text-slate-400 mt-4 font-medium italic">Tüm mutfak talepleri sisteme işlenmiş veya tamamlanmış durumda.</p>
+              <h3 className="text-2xl font-black text-slate-300 uppercase tracking-[0.3em]">
+                Bekleyen Sipariş Bulunmuyor
+              </h3>
+              <p className="text-slate-400 mt-4 font-medium italic">
+                Tüm mutfak talepleri sisteme işlenmiş veya tamamlanmış durumda.
+              </p>
             </div>
           </div>
         )}
@@ -1331,5 +1422,6 @@ console.log(
     </div>
   );
 };
+
 
 export default App;
