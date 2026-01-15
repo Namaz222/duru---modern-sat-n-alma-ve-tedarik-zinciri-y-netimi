@@ -1180,7 +1180,8 @@ console.log(
   recommendations.map(r => r.product_name)
 );
 
-      const cheapest = findCheapestOffer(req.productId);
+    const cheapest = findCheapestOffer(req.productId, req.productName);
+
 
       if (cheapest && cheapest.supplierId) {
         if (!groups[cheapest.supplierId]) {
