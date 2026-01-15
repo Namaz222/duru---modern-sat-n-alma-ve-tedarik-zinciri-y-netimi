@@ -1118,21 +1118,29 @@ const ProcurementManager: React.FC<{
   }[]>([]);
 
   useEffect(() => {
-    const loadRecommendations = async () => {
-      const { data, error } = await supabase
-        .from('similar_product_recommendations')
-        .select('*');
+  const loadRecommendations = async () => {
+    const { data, error } = await supabase
+      .from('purchase_history')
+      .select(`
+        product_name,
+        supplier_id,
+        supplier_name,
+        unit_price,
+        quantity,
+        purchased_at
+      `);
 
-      if (error) {
-        console.error('❌ Recommendation load error:', error);
-      } else {
-        console.log('✅ Recommendations:', data);
-        setRecommendations(data || []);
-      }
-    };
+    if (error) {
+      console.error('❌ purchase_history okunamadı:', error.message);
+      return;
+    }
 
-    loadRecommendations();
-  }, []);
+    console.log('✅ purchase_history:', data);
+    setRecommendations(data || []);
+  };
+
+  loadRecommendations();
+}, []);
 
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
 
