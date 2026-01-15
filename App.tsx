@@ -1141,15 +1141,17 @@ useEffect(() => {
 
   const pendingRequests = useMemo(() => requests.filter(r => r.status === RequestStatus.PENDING), [requests]);
 
-  const findCheapestOffer = (productId: string) => {
-  const matches = recommendations.filter(
-    r => r.product_id === productId
+  const findCheapestOffer = (productId: string, productName?: string) => {
+  // Eğer hem ID hem isim varsa, isimle eşleştirme yapıyoruz
+  const key = productName?.trim().toLowerCase();
+
+  const matches = recommendations.filter(r => 
+    r.product_name?.trim().toLowerCase() === key
   );
 
   if (matches.length === 0) return null;
 
-  // her tedarikçi için zaten EN GÜNCEL kayıt geliyor
-  // şimdi tedarikçiler arasında en ucuzu seçiyoruz
+  // en ucuz olanı seç
   matches.sort((a, b) => a.unit_price - b.unit_price);
 
   const best = matches[0];
@@ -1158,11 +1160,12 @@ useEffect(() => {
     price: best.unit_price,
     supplierId: best.supplier_id,
     supplierName: best.supplier_name,
-    supplierPhone: '-',
-    supplierEmail: '-',
+    supplierPhone: suppliers.find(s => s.id === best.supplier_id)?.phone || '-',
+    supplierEmail: suppliers.find(s => s.id === best.supplier_id)?.email || '-',
     date: best.purchased_at
   };
 };
+
 
 
   // Grouping requests by suggested supplier
